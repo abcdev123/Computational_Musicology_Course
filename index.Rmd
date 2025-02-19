@@ -2,7 +2,10 @@
 title: "Computational_Musicology_dashboard"
 author: "Gijs Schouten"
 date: "2025-02-12"
-output: html_document
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+    theme: cosmo
 ---
 
 ```{r setup, include=FALSE}
@@ -15,8 +18,8 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
+```{r}
+
 ```
 
 ## Including Plots
@@ -25,6 +28,12 @@ You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
 plot(pressure)
+```
+
+### Plot 1
+
+``` {r}
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
