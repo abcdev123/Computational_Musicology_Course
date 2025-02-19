@@ -1,3 +1,7 @@
+library(ggplot2)
+
+aisc2024 <- read.csv("aisc.csv", header = TRUE)
+
 aisc2024 |>                   # Start with the data
   ggplot(                     # Set up the plot.
     aes(
@@ -39,3 +43,4 @@ aisc2024 |>                   # Start with the data
     y = "Arousal",
     colour = "Danceability"
   )
+
