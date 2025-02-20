@@ -9,14 +9,11 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## R Markdown
+## Dashboard
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 
 ### Plot 1
@@ -24,67 +21,77 @@ When you click the **Knit** button a document will be generated that includes bo
 ``` {r}
 
 library(ggplot2)
+library(dplyr)
 
-aisc2024 <- read.csv("aisc.csv", header = TRUE)
 
-aisc2024 |>                   # Start with the data
-  ggplot(                     # Set up the plot.
-    aes(
-      x = tempo,
-      y = arousal,
-      size = instrumentalness,
-      colour = danceability
-    )
-  ) +
-  geom_point() +              # Scatter plot.
-  geom_rug(linewidth = 0.1) + # Add 'fringes' to show data distribution.
-  geom_text(                  # Add text labels from above.
-    x = 121,
-    y = 4.91,
-    label = "Onda Corta - Sud America",
-    size = 3,                 # Override size (not loudness here).
-    hjust = "left",           # Align left side of label with the point.
-    vjust = "center",         # Align vertical centre of label with the point.
-    angle = 30                # Rotate the text label
-  ) +
-  scale_x_continuous(         # Fine-tune the x axis.
-    limits = c(0, 200),
-    breaks = c(50, 100, 150, 200), # Specify grid lines
-    minor_breaks = NULL       # Remove 'minor' grid lines.
-  ) +
-  scale_y_continuous(         # Fine-tune the y axis in the same way.
-    limits = c(1, 9),
-    breaks = c(1, 5, 9),
-    minor_breaks = NULL
-  ) +
-  scale_colour_viridis_c() +  # Use the popular viridis colour palette.
-  scale_size_continuous(      # Fine-tune the sizes of each point.
-    trans = "exp",            # Use an exp transformation to emphasise loud..
-    guide = "none"            # Remove the legend for size.
-  ) +
-  theme_light() +             # Use a simpler theme.
-  labs(                       # Make the titles nice.
-    x = "Tempo",
-    y = "Arousal",
-    colour = "Danceability"
+corpus <- read.csv("aisc.csv", header = TRUE)
+
+
+corpus_avg <- corpus %>%
+  group_by(arousal) %>%
+  summarise(avg_danceability = mean(danceability, na.rm = TRUE))
+
+ggplot(corpus_avg, aes(x = arousal, y = avg_danceability)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "darkblue", size = 3) +
+  theme_minimal() +
+  labs(
+    title = "Arousal vs Danceability (Trend Line)",
+    x = "Arousal (Energy Level)",
+    y = "Average Danceability"
   )
+
 
 ```
 
 ***
 
-test
+X-axis (Arousal - Energy Level): Measures the intensity/energy of the song. Higher values mean the song feels more energetic.
+Y-axis (Danceability): Measures how easy the song is to dance to.
+
+This plot visualizes the relationship between arousal (energy level) and danceability. The fluctuating trend suggests that there is no direct correlation. 
+Some high-energy songs are highly danceable, while others are not. Peaks around arousal levels 4.0 and 4.5 indicate that certain energy levels favor danceability, but the sudden drops highlight that not all energetic songs are easy to dance to.
 
 ### Plot 2
 
 ``` {r}
-aisc2024
+
+library(ggplot2)
+library(dplyr)
+
+
+corpus <- read.csv("aisc.csv", header = TRUE)
+
+
+corpus_avg <- corpus %>%
+  group_by(arousal) %>%
+  summarise(avg_danceability = mean(danceability, na.rm = TRUE))
+
+
+ggplot(corpus, aes(x = arousal, y = danceability)) +
+  geom_bin2d(bins = 10) +
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  labs(
+    title = "2D Histogram of Arousal vs Danceability",
+    x = "Arousal (Energy Level)",
+    y = "Danceability",
+    fill = "Count"
+  )
 
 
 
 ```
 
 ***
-test
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+To get some more insights into the relationship between the two variables, I made another plot.
+
+This plot visualizes the relationship between arousal (energy level) and danceability in AI-generated songs. Darker areas indicate where more songs exist, while lighter areas show less common combinations.
+
+- No clear concentration: Songs are spread across various arousal and danceability levels, suggesting diverse musical characteristics.  
+- High-density regions: Some areas (e.g., arousal ~4.5, danceability ~0.6) contain more songs, indicating common trends.  
+- Rare combinations: Light yellow blocks highlight arousal-danceability pairs that occur less frequently.  
+
+This suggests that the songs **do not follow a strict pattern**
+

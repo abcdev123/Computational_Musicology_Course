@@ -44,3 +44,82 @@ aisc2024 |>                   # Start with the data
     colour = "Danceability"
   )
 
+library(ggplot2)
+library(dplyr)
+
+corpus <- read.csv("aisc.csv", header = TRUE)
+
+
+corpus <- corpus %>%
+  mutate(tempo_bin = cut(tempo, breaks = seq(0, 200, by = 40)))
+
+ggplot(corpus, aes(x = tempo_bin, y = danceability, fill = tempo_bin)) +
+  geom_boxplot() +
+  scale_fill_viridis_d() + 
+  theme_minimal() +
+  labs(
+    title = "Danceability Distribution Across Tempo Bins",
+    x = "Tempo Bins",
+    y = "Danceability",
+    fill = "Tempo Range"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+ggplot(corpus, aes(x = arousal)) +
+  geom_histogram(binwidth = 0.3, fill = "steelblue", color = "black", alpha = 0.7) +
+  theme_minimal() +
+  labs(
+    title = "Histogram of Arousal Levels",
+    x = "Arousal",
+    y = "Frequency"
+  )
+
+
+corpus_avg <- corpus %>%
+  group_by(tempo) %>%
+  summarise(avg_valence = mean(valence, na.rm = TRUE))
+
+ggplot(corpus_avg, aes(x = tempo, y = avg_valence)) +
+  geom_line(color = "red", size = 1) +
+  geom_point(color = "darkred") +
+  theme_minimal() +
+  labs(
+    title = "Valence vs Tempo Trend",
+    x = "Tempo",
+    y = "Average Valence"
+  )
+
+
+
+library(ggplot2)
+library(dplyr)
+
+corpus <- read.csv("aisc.csv", header = TRUE)
+
+corpus <- corpus %>%
+  mutate(tempo_bin = cut(tempo, breaks = seq(0, 200, by = 40)))
+
+ggplot(corpus, aes(x = arousal)) +
+  geom_histogram(binwidth = 0.3, fill = "steelblue", color = "black", alpha = 0.7) +
+  theme_minimal() +
+  labs(
+    title = "Histogram of Arousal Levels",
+    x = "Arousal",
+    y = "Frequency"
+  )
+
+corpus_avg <- corpus %>%
+  group_by(tempo) %>%
+  summarise(avg_valence = mean(valence, na.rm = TRUE))
+
+ggplot(corpus_avg, aes(x = tempo, y = avg_valence)) +
+  geom_line(color = "red", size = 1) +
+  geom_point(color = "darkred") +
+  theme_minimal() +
+  labs(
+    title = "Valence vs Tempo Trend",
+    x = "Tempo",
+    y = "Average Valence"
+  )
+
