@@ -15,8 +15,162 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Dashboard
 
 
+### Chromagram
+``` {r}
 
-### Plot 1
+library(tidyverse)
+library(patchwork)
+source("compmus.R")
+
+plot1 <- "features/gijs-s-1.json" |>                          
+  compmus_chroma(norm = "identity") |>                
+  ggplot(aes(x = time, y = pc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:11,
+    minor_breaks = NULL,
+    labels = c(
+                "C", "C#|Db", "D", "D#|Eb",
+                "E", "F", "F#|Gb", "G",
+                "G#|Ab", "A", "A#|Bb", "B"
+              )
+  ) +
+  scale_fill_viridis_c(name = "Count") +              
+  labs(title = "Chromagram: Track 1", x = "Time (s)", y = NULL, fill = "Intensity") + 
+  theme_classic() 
+
+plot2 <- "features/gijs-s-2.json" |>                          
+  compmus_chroma(norm = "identity") |>                
+  ggplot(aes(x = time, y = pc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:11,
+    minor_breaks = NULL,
+    labels = c(
+                "C", "C#|Db", "D", "D#|Eb",
+                "E", "F", "F#|Gb", "G",
+                "G#|Ab", "A", "A#|Bb", "B"
+              )
+  ) +
+  scale_fill_viridis_c(name = "Count") +              
+  labs(title = "Chromagram: Track 2", x = "Time (s)", y = NULL, fill = "Intensity") + 
+  theme_classic() 
+
+plot1 / plot2
+
+
+```
+
+***
+These two chromagrams show how pitch classes are distributed over time for two AI-generated tracks—one in the house genre and the other in jazz. Each plot maps time on the x-axis and pitch classes on the y-axis, displaying which notes are present and how often they appear. 
+
+The brightness in the chromagram reflects the intensity and frequency of each note. Brighter areas indicate that certain notes are played more often or stand out more in the track. Both tracks have a wide distribution of chroma activity, meaning multiple notes are active at any given moment. 
+
+The house track has a more scattered chroma distribution, with notes appearing more evenly across different pitch classes. This suggests a harmonically varied composition with possible key changes or complex chord progressions. The jazz track, on the other hand, has more structured patterns, with certain pitch classes appearing consistently over time. This suggests a stronger tonal center and a more repetitive harmonic progression. 
+
+Overall, the house track appears more fluid and experimental, while the jazz track has a more stable and structured harmonic foundation. This fits with the characteristics of each genre, as house music often builds on evolving textures, while jazz tends to have clearer harmonic progressions.
+
+
+### Chroma-based self-similarity
+``` {r}
+
+library(tidyverse)
+library(patchwork)
+source("compmus.R")
+
+plot1 <- "features/gijs-s-1.json" |>                          
+  compmus_chroma(norm = "identity") |>                
+  compmus_self_similarity(
+    feature = pc,
+    distance = "euclidean"
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Distance") +   # Add legend
+  labs(title = "Self-Similarity: Track 1", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
+  theme_classic() 
+
+plot2 <- "features/gijs-s-2.json" |>                          
+  compmus_chroma(norm = "identity") |>                
+  compmus_self_similarity(
+    feature = pc,
+    distance = "euclidean"
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Distance") +
+  labs(title = "Self-Similarity: Track 2", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
+  theme_classic() 
+
+plot1 / plot2
+
+```
+
+***
+The two self-similarity matrices visualize how the harmonic content of each song evolves over time by comparing different moments in the track. Both matrices display a diagonal line from the bottom left to the top right, indicating that each moment is most similar to itself. The surrounding patterns reflect recurring harmonic structures and repeated sections within each song.  
+
+In both songs, the similarity patterns appear dense, suggesting frequent harmonic variation. However, song 1 has a more fragmented structure with distinct dark regions, indicating moments of higher self-similarity, possibly due to key changes or shifts in harmonic content. In contrast, song 2 exhibits a more uniform distribution of similarity, with fewer pronounced dark regions. This suggests a more consistent harmonic progression throughout the piece, with less abrupt harmonic contrast.  
+
+Overall, song 1 appears to have greater harmonic complexity and variation, while song 2 follows a more stable and repetitive harmonic structure.
+
+
+
+
+### Timbre-based self-similarity
+``` {r}
+
+library(tidyverse)
+library(patchwork)
+source("compmus.R")
+
+
+plot1 <- "features/gijs-s-1.json" |>                          
+  compmus_mfccs(norm = "identity") |>                
+  compmus_self_similarity(
+    feature = mfcc,
+    distance = "euclidean"
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Distance") +
+  labs(title = "Timbre Self-Similarity: Track 1", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
+  theme_classic() 
+
+
+plot2 <- "features/gijs-s-2.json" |>                          
+  compmus_mfccs(norm = "identity") |>                
+  compmus_self_similarity(
+    feature = mfcc,
+    distance = "euclidean"
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Distance") +
+  labs(title = "Timbre Self-Similarity: Track 2", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
+  theme_classic() 
+
+
+plot1 / plot2
+
+
+```
+
+***
+The self-similarity matrices illustrate the timbral characteristics of each track by comparing different moments over time. Both matrices display a diagonal line from the bottom left to the top right, indicating that each moment is most similar to itself. The surrounding patterns reveal recurring timbral structures and repeated sections within each track.  
+
+Track 1 exhibits a more uniform and continuous pattern, with fewer sharp transitions. This suggests a consistent timbral texture throughout the track, with subtle variations rather than distinct shifts. In contrast, track 2 features more pronounced block-like divisions, indicating clearer section changes and greater contrast in timbral qualities across different parts of the track.  
+
+These differences align with the characteristics of house and jazz music. Track 1, the house track, maintains a smooth and continuous timbral structure, reflecting the steady rhythms, looping textures, and gradual sound evolution typical of the genre. The uniformity in the matrix suggests consistent instrumental layers with minimal abrupt changes.  
+
+Track 2, the jazz track, displays clearer section changes and greater timbral contrast, which is characteristic of jazz’s dynamic shifts, improvisation, and varied instrumentation. The block-like divisions indicate distinct sections and tonal variations, likely resulting from solos, chord changes, and expressive phrasing.
+
+The chroma self-similarity matrix is more stable because jazz has recurring harmonic cycles, while the timbre self-similarity matrix is more varied due to instrumental changes, improvisation, and expressive dynamics.
+
+Overall, the self-similarity results highlight the contrast between the two genres, with house music maintaining a steady, evolving texture, while jazz features more varied and dynamic structural changes.
+
+
+
+### Class Corpus Trend line
 
 ``` {r}
 
@@ -24,7 +178,7 @@ library(ggplot2)
 library(dplyr)
 
 
-corpus <- read.csv("aisc.csv", header = TRUE)
+corpus <- read.csv("compmus2025.csv", header = TRUE)
 
 
 corpus_avg <- corpus %>%
@@ -52,7 +206,7 @@ Y-axis (Danceability): Measures how easy the song is to dance to.
 This plot visualizes the relationship between arousal (energy level) and danceability. The fluctuating trend suggests that there is no direct correlation. 
 Some high-energy songs are highly danceable, while others are not. Peaks around arousal levels 4.0 and 4.5 indicate that certain energy levels favor danceability, but the sudden drops highlight that not all energetic songs are easy to dance to.
 
-### Plot 2
+### Class Corpus 2D Histogram
 
 ``` {r}
 
@@ -60,7 +214,7 @@ library(ggplot2)
 library(dplyr)
 
 
-corpus <- read.csv("aisc.csv", header = TRUE)
+corpus <- read.csv("compmus2025.csv", header = TRUE)
 
 
 corpus_avg <- corpus %>%
@@ -87,11 +241,13 @@ ggplot(corpus, aes(x = arousal, y = danceability)) +
 
 To get some more insights into the relationship between the two variables, I made another plot.
 
-This plot visualizes the relationship between arousal (energy level) and danceability in AI-generated songs. Darker areas indicate where more songs exist, while lighter areas show less common combinations.
+This plot visualizes the relationship between arousal (energy level) and danceability in the class corpus. Lighter areas indicate where more songs exist, while darker areas show less common combinations.
 
 - No clear concentration: Songs are spread across various arousal and danceability levels, suggesting diverse musical characteristics.  
-- High-density regions: Some areas (e.g., arousal ~4.5, danceability ~0.6) contain more songs, indicating common trends.  
-- Rare combinations: Light yellow blocks highlight arousal-danceability pairs that occur less frequently.  
+- High-density regions: Some areas contain more songs, indicating common trends.  
+- Rare combinations: Dark purple blocks highlight arousal-danceability pairs that occur less frequently.  
 
 This suggests that the songs **do not follow a strict pattern**
+
+
 
