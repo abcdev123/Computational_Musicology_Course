@@ -5,6 +5,7 @@ date: "2025-02-12"
 output: 
   flexdashboard::flex_dashboard:
     storyboard: true
+    orientation: columns
     theme: cosmo
 ---
 
@@ -102,7 +103,96 @@ key_templates <-
   )
 ```
 
+``` {r}
+# all packages
+
+library(tidyverse)
+library(tidymodels)
+library(ggdendro)
+library(heatmaply)
+library(signal)
+library(plotly)
+library(htmltools)
+library(patchwork)
+library(ggplot2)
+library(dplyr)
+
+
+```
+
 ## Dashboard
+
+``` {r}
+
+source("compmus.R")
+
+get_conf_mat <- function(fit) {
+  outcome <- .get_tune_outcome_names(fit)
+  fit |> 
+    collect_predictions() |> 
+    conf_mat(truth = outcome, estimate = .pred_class)
+}  
+
+get_pr <- function(fit) {
+  fit |> 
+    conf_mat_resampled() |> 
+    group_by(Prediction) |> mutate(precision = Freq / sum(Freq)) |> 
+    group_by(Truth) |> mutate(recall = Freq / sum(Freq)) |> 
+    ungroup() |> filter(Prediction == Truth) |> 
+    select(class = Prediction, precision, recall)
+}
+
+compmus2025 <- read_csv("compmus2025.csv")
+
+```
+
+
+### Week 12 dendogram
+``` {r}
+
+library(tidyverse)
+library(tidymodels)
+library(ggdendro)
+
+cluster_juice <-
+  recipe(
+    filename ~
+      arousal +
+      danceability +
+      instrumentalness +
+      tempo +
+      valence,
+    data = compmus2025
+  ) |>
+  step_center(all_predictors()) |>
+  step_scale(all_predictors()) |> 
+  # step_range(all_predictors()) |> 
+  prep(compmus2025) |>
+  juice() |>
+  column_to_rownames("filename")
+
+compmus_dist <- dist(cluster_juice, method = "euclidean")
+
+compmus_dist |> 
+  hclust(method = "average") |> # Try single, average, and complete.
+  dendro_data() |>
+  ggdendrogram()
+
+```
+
+
+
+### Week 12 heatmap
+``` {r}
+
+heatmaply(
+  cluster_juice,
+  hclustfun = hclust,
+  hclust_method = "average",  # Change for single, average, or complete linkage.
+  dist_method = "euclidean"
+)
+```
+
 
 ### Week 11 Tempogram track 1
 ``` {r}
@@ -137,6 +227,34 @@ source("compmus.R")
   theme_classic()
 
 ```
+
+
+
+### Week 11 Energy Novelty
+```{r}
+
+"features/gijs-s-1.json" |>
+  compmus_energy_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "Energy Novelty")
+
+```
+
+### Week 11 Spectral Novelty
+```{r}
+
+"features/gijs-s-1.json" |>
+  compmus_spectral_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(x = "Time (s)", y = "Spectral Novelty")
+
+```
+
+
 
 ### Week 10 Keygram and Chordogram
 ``` {r}
