@@ -120,8 +120,6 @@ library(dplyr)
 
 ```
 
-## Dashboard
-
 ``` {r}
 
 source("compmus.R")
@@ -146,183 +144,7 @@ compmus2025 <- read_csv("compmus2025.csv")
 
 ```
 
-
-### Week 12 dendogram
-``` {r}
-
-library(tidyverse)
-library(tidymodels)
-library(ggdendro)
-
-cluster_juice <-
-  recipe(
-    filename ~
-      arousal +
-      danceability +
-      instrumentalness +
-      tempo +
-      valence,
-    data = compmus2025
-  ) |>
-  step_center(all_predictors()) |>
-  step_scale(all_predictors()) |> 
-  # step_range(all_predictors()) |> 
-  prep(compmus2025) |>
-  juice() |>
-  column_to_rownames("filename")
-
-compmus_dist <- dist(cluster_juice, method = "euclidean")
-
-compmus_dist |> 
-  hclust(method = "average") |> # Try single, average, and complete.
-  dendro_data() |>
-  ggdendrogram()
-
-```
-
-
-
-### Week 12 heatmap
-``` {r}
-
-heatmaply(
-  cluster_juice,
-  hclustfun = hclust,
-  hclust_method = "average",  # Change for single, average, or complete linkage.
-  dist_method = "euclidean"
-)
-```
-
-
-### Week 11 Tempogram track 1
-``` {r}
-
-library(tidyverse)
-library(signal)
-source("compmus.R")
-
-"features/gijs-s-1.json" |>
-  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
-  ggplot(aes(x = time, y = bpm, fill = power)) +
-  geom_raster() +
-  scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)") +
-  theme_classic()
-
-```
-
-### Week 11 Tempogram track 2
-``` {r}
-
-library(tidyverse)
-library(signal)
-source("compmus.R")
-
-"features/gijs-s-2.json" |>
-  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
-  ggplot(aes(x = time, y = bpm, fill = power)) +
-  geom_raster() +
-  scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)") +
-  theme_classic()
-
-```
-
-
-
-### Week 11 Energy Novelty
-```{r}
-
-"features/gijs-s-1.json" |>
-  compmus_energy_novelty() |> 
-  ggplot(aes(t, novelty)) +
-  geom_line() +
-  theme_minimal() +
-  labs(x = "Time (s)", y = "Energy Novelty")
-
-```
-
-### Week 11 Spectral Novelty
-```{r}
-
-"features/gijs-s-1.json" |>
-  compmus_spectral_novelty() |> 
-  ggplot(aes(t, novelty)) +
-  geom_line() +
-  theme_minimal() +
-  labs(x = "Time (s)", y = "Spectral Novelty")
-
-```
-
-
-
-### Week 10 Keygram and Chordogram
-``` {r}
-
-library(tidyverse)
-library(plotly)
-source("compmus.R")
-
-chordogram <- "features/gijs-s-1.json" |> 
-  compmus_chroma(norm = "identity") |> 
-  compmus_match_pitch_templates(
-    chord_templates,   
-    norm = "identity",       
-    distance = "cosine"    
-  ) |>
-  ggplot(aes(x = time, y = name, fill = d)) + 
-  geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               
-  labs(x = "Time (s)", y = "Chords") +
-  theme_classic()
-
-chordogram_plotly <- ggplotly(chordogram)
-
-keygram <- "features/gijs-s-1.json" |> 
-  compmus_chroma(norm = "identity") |> 
-  compmus_match_pitch_templates(
-    key_templates,   
-    norm = "identity",       
-    distance = "cosine"    
-  ) |>
-  ggplot(aes(x = time, y = name, fill = d)) + 
-  geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               
-  labs(x = "Time (s)", y = "Keys") +
-  theme_classic()
-
-keygram_plotly <- ggplotly(keygram)
-
-fig <- subplot(
-  chordogram_plotly, 
-  keygram_plotly, 
-  nrows = 2,
-  titleX = TRUE,
-  margin = 0.09
-)
-
-
-fig <- fig |> layout(
-  annotations = list(
-    list(
-      text = "<b>Chordogram of Track 1</b>", 
-      x = 0.5, y = 1.03, xref = "paper", yref = "paper", 
-      showarrow = FALSE, font = list(size = 16, family = "Arial")
-    ),
-    list(
-      text = "<b>Keygram of Track 1</b>", 
-      x = 0.5, y = 0.43, xref = "paper", yref = "paper", 
-      showarrow = FALSE, font = list(size = 16, family = "Arial")
-    )
-  )
-)
-
-fig
-
-
-```
-
-***
+## Dashboard
 
 ### Introduction
 
@@ -364,161 +186,9 @@ HTML(as.character(tagList(
 
 ```
 
-
-### Chromagram
-``` {r}
-
-library(tidyverse)
-library(patchwork)
-source("compmus.R")
-
-plot1 <- "features/gijs-s-1.json" |>                          
-  compmus_chroma(norm = "identity") |>                
-  ggplot(aes(x = time, y = pc, fill = value)) + 
-  geom_raster() +
-  scale_y_continuous(
-    breaks = 0:11,
-    minor_breaks = NULL,
-    labels = c(
-                "C", "C#|Db", "D", "D#|Eb",
-                "E", "F", "F#|Gb", "G",
-                "G#|Ab", "A", "A#|Bb", "B"
-              )
-  ) +
-  scale_fill_viridis_c(name = "Count") +              
-  labs(title = "Chromagram: Track 1", x = "Time (s)", y = NULL, fill = "Intensity") + 
-  theme_classic() 
-
-plot2 <- "features/gijs-s-2.json" |>                          
-  compmus_chroma(norm = "identity") |>                
-  ggplot(aes(x = time, y = pc, fill = value)) + 
-  geom_raster() +
-  scale_y_continuous(
-    breaks = 0:11,
-    minor_breaks = NULL,
-    labels = c(
-                "C", "C#|Db", "D", "D#|Eb",
-                "E", "F", "F#|Gb", "G",
-                "G#|Ab", "A", "A#|Bb", "B"
-              )
-  ) +
-  scale_fill_viridis_c(name = "Count") +              
-  labs(title = "Chromagram: Track 2", x = "Time (s)", y = NULL, fill = "Intensity") + 
-  theme_classic() 
-
-plot1 / plot2
-
-
-```
-
 ***
-These two chromagrams show how pitch classes are distributed over time for two AI-generated tracks—one in the house genre and the other in jazz. Each plot maps time on the x-axis and pitch classes on the y-axis, displaying which notes are present and how often they appear. 
 
-The brightness in the chromagram reflects the intensity and frequency of each note. Brighter areas indicate that certain notes are played more often or stand out more in the track. Both tracks have a wide distribution of chroma activity, meaning multiple notes are active at any given moment. 
-
-The house track has a more scattered chroma distribution, with notes appearing more evenly across different pitch classes. This suggests a harmonically varied composition with possible key changes or complex chord progressions. The jazz track, on the other hand, has more structured patterns, with certain pitch classes appearing consistently over time. This suggests a stronger tonal center and a more repetitive harmonic progression. 
-
-Overall, the house track appears more fluid and experimental, while the jazz track has a more stable and structured harmonic foundation. This fits with the characteristics of each genre, as house music often builds on evolving textures, while jazz tends to have clearer harmonic progressions.
-
-
-### Chroma-based self-similarity
-``` {r}
-
-library(tidyverse)
-library(patchwork)
-source("compmus.R")
-
-plot1 <- "features/gijs-s-1.json" |>                          
-  compmus_chroma(norm = "identity") |>                
-  compmus_self_similarity(
-    feature = pc,
-    distance = "euclidean"
-  ) |>   
-  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
-  geom_raster() +
-  scale_fill_viridis_c(name = "Distance") +   # Add legend
-  labs(title = "Self-Similarity: Track 1", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
-  theme_classic() 
-
-plot2 <- "features/gijs-s-2.json" |>                          
-  compmus_chroma(norm = "identity") |>                
-  compmus_self_similarity(
-    feature = pc,
-    distance = "euclidean"
-  ) |>   
-  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
-  geom_raster() +
-  scale_fill_viridis_c(name = "Distance") +
-  labs(title = "Self-Similarity: Track 2", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
-  theme_classic() 
-
-plot1 / plot2
-
-```
-
-***
-The two self-similarity matrices visualize how the harmonic content of each song evolves over time by comparing different moments in the track. Both matrices display a diagonal line from the bottom left to the top right, indicating that each moment is most similar to itself. The surrounding patterns reflect recurring harmonic structures and repeated sections within each song.  
-
-In both songs, the similarity patterns appear dense, suggesting frequent harmonic variation. However, song 1 has a more fragmented structure with distinct dark regions, indicating moments of higher self-similarity, possibly due to key changes or shifts in harmonic content. In contrast, song 2 exhibits a more uniform distribution of similarity, with fewer pronounced dark regions. This suggests a more consistent harmonic progression throughout the piece, with less abrupt harmonic contrast.  
-
-Overall, song 1 appears to have greater harmonic complexity and variation, while song 2 follows a more stable and repetitive harmonic structure.
-
-
-
-
-### Timbre-based self-similarity
-``` {r}
-
-library(tidyverse)
-library(patchwork)
-source("compmus.R")
-
-
-plot1 <- "features/gijs-s-1.json" |>                          
-  compmus_mfccs(norm = "identity") |>                
-  compmus_self_similarity(
-    feature = mfcc,
-    distance = "euclidean"
-  ) |>   
-  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
-  geom_raster() +
-  scale_fill_viridis_c(name = "Distance") +
-  labs(title = "Timbre Self-Similarity: Track 1", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
-  theme_classic() 
-
-
-plot2 <- "features/gijs-s-2.json" |>                          
-  compmus_mfccs(norm = "identity") |>                
-  compmus_self_similarity(
-    feature = mfcc,
-    distance = "euclidean"
-  ) |>   
-  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
-  geom_raster() +
-  scale_fill_viridis_c(name = "Distance") +
-  labs(title = "Timbre Self-Similarity: Track 2", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
-  theme_classic() 
-
-
-plot1 / plot2
-
-
-```
-
-***
-The self-similarity matrices illustrate the timbral characteristics of each track by comparing different moments over time. Both matrices display a diagonal line from the bottom left to the top right, indicating that each moment is most similar to itself. The surrounding patterns reveal recurring timbral structures and repeated sections within each track.  
-
-Track 1 exhibits a more uniform and continuous pattern, with fewer sharp transitions. This suggests a consistent timbral texture throughout the track, with subtle variations rather than distinct shifts. In contrast, track 2 features more pronounced block-like divisions, indicating clearer section changes and greater contrast in timbral qualities across different parts of the track.  
-
-These differences align with the characteristics of house and jazz music. Track 1, the house track, maintains a smooth and continuous timbral structure, reflecting the steady rhythms, looping textures, and gradual sound evolution typical of the genre. The uniformity in the matrix suggests consistent instrumental layers with minimal abrupt changes.  
-
-Track 2, the jazz track, displays clearer section changes and greater timbral contrast, which is characteristic of jazz’s dynamic shifts, improvisation, and varied instrumentation. The block-like divisions indicate distinct sections and tonal variations, likely resulting from solos, chord changes, and expressive phrasing.
-
-The chroma self-similarity matrix is more stable because jazz has recurring harmonic cycles, while the timbre self-similarity matrix is more varied due to instrumental changes, improvisation, and expressive dynamics.
-
-Overall, the self-similarity results highlight the contrast between the two genres, with house music maintaining a steady, evolving texture, while jazz features more varied and dynamic structural changes.
-
-
+These two tracks are based on my two favorate music genres. Namely house and jazz. I was interested to find out how well an AI music generator was capable of generating tracks in these genres and I would say it has done a pretty good job, considering how new this technology is. When listening to the tracks you hear that it is not always very smooth (For example in the time window of 45sec to 55sec in track 1 and the time window 1:20 to 1:30 in track 2) It sounds like the instruments are poorly tuned in those time windows. However, I am sure that minor imperfections like these will be a thing of the past when new model updates are released. Let's dive into the details, starting with an overview of the class portfolio after which I will focus on my two tracks.
 
 ### Class Corpus Trend line
 
@@ -598,6 +268,421 @@ This plot visualizes the relationship between arousal (energy level) and danceab
 - Rare combinations: Dark purple blocks highlight arousal-danceability pairs that occur less frequently.  
 
 This suggests that the songs **do not follow a strict pattern**
+
+
+### Week 9 Chromagram
+``` {r}
+
+library(tidyverse)
+library(patchwork)
+source("compmus.R")
+
+plot1 <- "features/gijs-s-1.json" |>                          
+  compmus_chroma(norm = "identity") |>                
+  ggplot(aes(x = time, y = pc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:11,
+    minor_breaks = NULL,
+    labels = c(
+                "C", "C#|Db", "D", "D#|Eb",
+                "E", "F", "F#|Gb", "G",
+                "G#|Ab", "A", "A#|Bb", "B"
+              )
+  ) +
+  scale_fill_viridis_c(name = "Count") +              
+  labs(title = "Chromagram: Track 1", x = "Time (s)", y = NULL, fill = "Intensity") + 
+  theme_classic() 
+
+plot2 <- "features/gijs-s-2.json" |>                          
+  compmus_chroma(norm = "identity") |>                
+  ggplot(aes(x = time, y = pc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:11,
+    minor_breaks = NULL,
+    labels = c(
+                "C", "C#|Db", "D", "D#|Eb",
+                "E", "F", "F#|Gb", "G",
+                "G#|Ab", "A", "A#|Bb", "B"
+              )
+  ) +
+  scale_fill_viridis_c(name = "Count") +              
+  labs(title = "Chromagram: Track 2", x = "Time (s)", y = NULL, fill = "Intensity") + 
+  theme_classic() 
+
+plot1 / plot2
+
+
+```
+
+***
+These two chromagrams show how pitch classes are distributed over time for two AI-generated tracks—one in the house genre and the other in jazz. Each plot maps time on the x-axis and pitch classes on the y-axis, displaying which notes are present and how often they appear. 
+
+The brightness in the chromagram reflects the intensity and frequency of each note. Brighter areas indicate that certain notes are played more often or stand out more in the track. Both tracks have a wide distribution of chroma activity, meaning multiple notes are active at any given moment. 
+
+The house track has a more scattered chroma distribution, with notes appearing more evenly across different pitch classes. This suggests a harmonically varied composition with possible key changes or complex chord progressions. The jazz track, on the other hand, has more structured patterns, with certain pitch classes appearing consistently over time. This suggests a stronger tonal center and a more repetitive harmonic progression. 
+
+Overall, the house track appears more fluid and experimental, while the jazz track has a more stable and structured harmonic foundation. This fits with the characteristics of each genre, as house music often builds on evolving textures, while jazz tends to have clearer harmonic progressions.
+
+### Week 9 Cepstrogram
+``` {r}
+
+library(tidyverse)
+library(patchwork)
+source("compmus.R")
+
+# Cepstrogram - Track 1
+cepstro1 <- "features/gijs-s-1.json" |>                          
+  compmus_mfccs(norm = "identity") |>                
+  ggplot(aes(x = time, y = mfcc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:12,
+    minor_breaks = NULL
+  ) +
+  scale_fill_viridis_c(name = "MFCC Value") +
+  labs(title = "Cepstrogram: Track 1", x = "Time (s)", y = "Coefficient Number", fill = NULL) +
+  theme_classic()
+
+# Cepstrogram - Track 2
+cepstro2 <- "features/gijs-s-2.json" |>                          
+  compmus_mfccs(norm = "identity") |>                
+  ggplot(aes(x = time, y = mfcc, fill = value)) + 
+  geom_raster() +
+  scale_y_continuous(
+    breaks = 0:12,
+    minor_breaks = NULL
+  ) +
+  scale_fill_viridis_c(name = "MFCC Value") +
+  labs(title = "Cepstrogram: Track 2", x = "Time (s)", y = "Coefficient Number", fill = NULL) +
+  theme_classic()
+
+# Combine both plots on the same page
+cepstro1 / cepstro2
+
+
+```
+
+***
+The cepstrograms show how the timbre (tone color) of each track evolves over time using Mel-Frequency Cepstral Coefficients (MFCCs).
+
+Track 1 (House) displays a stable and repetitive pattern, especially in the lower coefficients. This reflects the consistent textures, loops, and rhythmic foundation typical of house music. The timbre stays relatively uniform, which matches the laid-back yet uplifting Ibiza beach vibe described in the prompt.
+
+Track 2 (Jazz) shows more variation across coefficients, especially in the mid and lower ranges. This indicates timbral shifts from expressive instruments like piano and saxophone. The fluctuations align with the jazz lounge atmosphere, where solos and instrumental changes are key.
+
+When observing the plots, it becomes clear that the following similarities and differences are present.
+
+Similarities:
+Both tracks show a strong low-frequency structure (lower MFCCs), reflecting tonal and rhythmic foundations.
+Both have overall structural stability.
+
+Differences:
+Track 1 shows a more homogeneous pattern, typical of loop-based electronic music.
+Track 2 reveals more color variation and texture, aligning with jazz's expressive, instrument-driven dynamics.
+
+
+
+### Week 9 chromagrams
+``` {r}
+
+library(tidyverse)
+library(patchwork)
+source("compmus.R")
+
+# Chroma-based self-similarity - Track 1
+chroma1 <- "features/gijs-s-1.json" |>                          
+  compmus_chroma(norm = "identity") |>                
+  compmus_self_similarity(
+    feature = pc,
+    distance = "euclidean"
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Distance") +
+  labs(title = "Chroma Self-Similarity: Track 1", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
+  theme_classic()
+
+# Chroma-based self-similarity - Track 2
+chroma2 <- "features/gijs-s-2.json" |>                          
+  compmus_chroma(norm = "identity") |>                
+  compmus_self_similarity(
+    feature = pc,
+    distance = "euclidean"
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Distance") +
+  labs(title = "Chroma Self-Similarity: Track 2", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
+  theme_classic()
+
+# Timbre-based self-similarity - Track 1
+timbre1 <- "features/gijs-s-1.json" |>                          
+  compmus_mfccs(norm = "identity") |>                
+  compmus_self_similarity(
+    feature = mfcc,
+    distance = "euclidean"
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Distance") +
+  labs(title = "Timbre Self-Similarity: Track 1", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
+  theme_classic()
+
+# Timbre-based self-similarity - Track 2
+timbre2 <- "features/gijs-s-2.json" |>                          
+  compmus_mfccs(norm = "identity") |>                
+  compmus_self_similarity(
+    feature = mfcc,
+    distance = "euclidean"
+  ) |>   
+  ggplot(aes(x = xtime, y = ytime, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(name = "Distance") +
+  labs(title = "Timbre Self-Similarity: Track 2", x = "Time (s)", y = "Time (s)", fill = "Distance") + 
+  theme_classic()
+
+# Combine in 2x2 layout
+(chroma1 | chroma2) / (timbre1 | timbre2)
+
+
+```
+
+***
+The two **chroma-based** self-similarity matrices visualize how the harmonic content of each song evolves over time by comparing different moments in the track. Both matrices display a diagonal line from the bottom left to the top right, indicating that each moment is most similar to itself. The surrounding patterns reflect recurring harmonic structures and repeated sections within each song.  
+
+In both songs, the similarity patterns appear dense, suggesting frequent harmonic variation. However, song 1 has a more fragmented structure with distinct dark regions, indicating moments of higher self-similarity, possibly due to key changes or shifts in harmonic content. In contrast, song 2 exhibits a more uniform distribution of similarity, with fewer pronounced dark regions. This suggests a more consistent harmonic progression throughout the piece, with less abrupt harmonic contrast.  
+
+Overall, song 1 appears to have greater harmonic complexity and variation, while song 2 follows a more stable and repetitive harmonic structure.
+
+
+The **timbre-based** self-similarity matrices illustrate the timbral characteristics of each track by comparing different moments over time. Both matrices display a diagonal line from the bottom left to the top right, indicating that each moment is most similar to itself. The surrounding patterns reveal recurring timbral structures and repeated sections within each track.
+
+Track 1 exhibits a more uniform and continuous pattern, with fewer sharp transitions. This suggests a consistent timbral texture throughout the track, with subtle variations rather than distinct shifts. In contrast, track 2 features more pronounced block-like divisions, indicating clearer section changes and greater contrast in timbral qualities across different parts of the track.  
+
+These differences align with the characteristics of house and jazz music. Track 1, the house track, maintains a smooth and continuous timbral structure, reflecting the steady rhythms, looping textures, and gradual sound evolution typical of the genre. The uniformity in the matrix suggests consistent instrumental layers with minimal abrupt changes.  
+
+Track 2, the jazz track, displays clearer section changes and greater timbral contrast, which is characteristic of jazz’s dynamic shifts, improvisation, and varied instrumentation. The block-like divisions indicate distinct sections and tonal variations, likely resulting from solos, chord changes, and expressive phrasing.
+
+The chroma-based self-similarity matrix is more stable because jazz has recurring harmonic cycles, while the timbre-based self-similarity matrix is more varied due to instrumental changes, improvisation, and expressive dynamics.
+
+Overall, the self-similarity results highlight the contrast between the two genres, with house music maintaining a steady, evolving texture, while jazz features more varied and dynamic structural changes.
+
+
+### Week 10 Keygram and Chordogram
+``` {r}
+
+library(tidyverse)
+library(plotly)
+source("compmus.R")
+
+chordogram <- "features/gijs-s-1.json" |> 
+  compmus_chroma(norm = "identity") |> 
+  compmus_match_pitch_templates(
+    chord_templates,   
+    norm = "identity",       
+    distance = "cosine"    
+  ) |>
+  ggplot(aes(x = time, y = name, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +               
+  labs(x = "Time (s)", y = "Chords") +
+  theme_classic()
+
+chordogram_plotly <- ggplotly(chordogram)
+
+keygram <- "features/gijs-s-1.json" |> 
+  compmus_chroma(norm = "identity") |> 
+  compmus_match_pitch_templates(
+    key_templates,   
+    norm = "identity",       
+    distance = "cosine"    
+  ) |>
+  ggplot(aes(x = time, y = name, fill = d)) + 
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +               
+  labs(x = "Time (s)", y = "Keys") +
+  theme_classic()
+
+keygram_plotly <- ggplotly(keygram)
+
+fig <- subplot(
+  chordogram_plotly, 
+  keygram_plotly, 
+  nrows = 2,
+  titleX = TRUE,
+  margin = 0.09
+)
+
+
+fig <- fig |> layout(
+  annotations = list(
+    list(
+      text = "<b>Chordogram of Track 1</b>", 
+      x = 0.5, y = 1.03, xref = "paper", yref = "paper", 
+      showarrow = FALSE, font = list(size = 16, family = "Arial")
+    ),
+    list(
+      text = "<b>Keygram of Track 1</b>", 
+      x = 0.5, y = 0.43, xref = "paper", yref = "paper", 
+      showarrow = FALSE, font = list(size = 16, family = "Arial")
+    )
+  )
+)
+
+fig
+
+
+```
+
+***
+Keygram and Chordogram description
+
+
+
+### Week 11 Tempogram track 1 and 2
+``` {r}
+
+library(tidyverse)
+library(signal)
+library(patchwork)
+source("compmus.R")
+
+# Tempogram plot track 1
+tempogram1 <- "features/gijs-s-1.json" |>
+  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(title = "Tempogram: Track 1", x = "Time (s)", y = "Tempo (BPM)") +
+  theme_classic()
+
+# Tempogram plot track 2
+tempogram2 <- "features/gijs-s-2.json" |>
+  compmus_tempogram(window_size = 8, hop_size = 1, cyclic = FALSE) |>
+  ggplot(aes(x = time, y = bpm, fill = power)) +
+  geom_raster() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(title = "Tempogram: Track 2", x = "Time (s)", y = "Tempo (BPM)") +
+  theme_classic()
+
+# Combine plots
+tempogram1 / tempogram2
+
+
+```
+
+
+
+### Week 11 Energy Novelty and Spectral Novelty
+```{r}
+
+library(tidyverse)
+library(patchwork)
+source("compmus.R")
+
+# Track 1 - Energy Novelty
+energy1 <- "features/gijs-s-1.json" |>
+  compmus_energy_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "Energy Novelty: Track 1", x = "Time (s)", y = "Energy Novelty")
+
+# Track 1 - Spectral Novelty
+spectral1 <- "features/gijs-s-1.json" |>
+  compmus_spectral_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "Spectral Novelty: Track 1", x = "Time (s)", y = "Spectral Novelty")
+
+# Track 2 - Energy Novelty
+energy2 <- "features/gijs-s-2.json" |>
+  compmus_energy_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "Energy Novelty: Track 2", x = "Time (s)", y = "Energy Novelty")
+
+# Track 2 - Spectral Novelty
+spectral2 <- "features/gijs-s-2.json" |>
+  compmus_spectral_novelty() |> 
+  ggplot(aes(t, novelty)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "Spectral Novelty: Track 2", x = "Time (s)", y = "Spectral Novelty")
+
+# Combine in 2x2 grid
+(energy1 | spectral1) / (energy2 | spectral2)
+
+
+```
+
+
+### Week 12 dendogram
+``` {r}
+
+library(tidyverse)
+library(tidymodels)
+library(ggdendro)
+library(ggplot2)
+
+
+cluster_juice <-
+  recipe(
+    filename ~
+      arousal +
+      danceability +
+      instrumentalness +
+      tempo +
+      valence,
+    data = compmus2025
+  ) |>
+  step_center(all_predictors()) |>
+  step_scale(all_predictors()) |> 
+  # step_range(all_predictors()) |> 
+  prep(compmus2025) |>
+  juice() |>
+  column_to_rownames("filename")
+
+compmus_dist <- dist(cluster_juice, method = "euclidean")
+
+
+compmus_dist |> 
+  hclust(method = "average") |> # Try single, average, and complete.
+  dendro_data() |>
+  ggdendrogram()
+
+```
+
+
+
+### Week 12 heatmap
+``` {r}
+
+heatmaply(
+  cluster_juice,
+  hclustfun = hclust,
+  hclust_method = "average",  # Change for single, average, or complete linkage.
+  dist_method = "euclidean"
+)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
