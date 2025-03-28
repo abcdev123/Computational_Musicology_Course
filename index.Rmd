@@ -188,7 +188,7 @@ HTML(as.character(tagList(
 
 ***
 
-These two tracks are based on my two favorate music genres. Namely house and jazz. I was interested to find out how well an AI music generator was capable of generating tracks in these genres and I would say it has done a pretty good job, considering how new this technology is. When listening to the tracks you hear that it is not always very smooth (For example in the time window of 45sec to 55sec in track 1 and the time window 1:20 to 1:30 in track 2) It sounds like the instruments are poorly tuned in those time windows. However, I am sure that minor imperfections like these will be a thing of the past when new model updates are released. Let's dive into the details, starting with an overview of the class portfolio after which I will focus on my two tracks.
+These two tracks are based on my two favorate music genres. Namely house and jazz. I was interested to find out how well an AI music generator was capable of generating tracks in these genres and I would say it has done a pretty good job, considering how new this technology is. When listening to the tracks you hear that it is not always very smooth (For example in the time window of 45sec to 55sec in track 1 and the time window 1:20 to 1:30 in track 2) It sounds like the instruments are poorly tuned in those time windows. However, I am sure that minor imperfections like these will be a thing of the past when new model updates are released. Let's dive into the details, starting with an overview of the class portfolio after which I will focus on my two tracks. The setup is structured in a way that it follows the concepts that we discussed during each week of the Computational musicology course.
 
 ### Class Corpus Trend line
 
@@ -367,9 +367,9 @@ cepstro1 / cepstro2
 ***
 The cepstrograms show how the timbre (tone color) of each track evolves over time using Mel-Frequency Cepstral Coefficients (MFCCs).
 
-Track 1 (House) displays a stable and repetitive pattern, especially in the lower coefficients. This reflects the consistent textures, loops, and rhythmic foundation typical of house music. The timbre stays relatively uniform, which matches the laid-back yet uplifting Ibiza beach vibe described in the prompt.
+Track 1 displays a stable and repetitive pattern, especially in the lower coefficients. This reflects the consistent textures, loops, and rhythmic foundation typical of house music. The timbre stays relatively uniform, which matches the laid-back yet uplifting Ibiza beach vibe described in the prompt.
 
-Track 2 (Jazz) shows more variation across coefficients, especially in the mid and lower ranges. This indicates timbral shifts from expressive instruments like piano and saxophone. The fluctuations align with the jazz lounge atmosphere, where solos and instrumental changes are key.
+Track 2 shows more variation across coefficients, especially in the mid and lower ranges. This indicates timbral shifts from expressive instruments like piano and saxophone. The fluctuations align with the jazz lounge atmosphere, where solos and instrumental changes are key.
 
 When observing the plots, it becomes clear that the following similarities and differences are present.
 
@@ -469,52 +469,56 @@ The chroma-based self-similarity matrix is more stable because jazz has recurrin
 Overall, the self-similarity results highlight the contrast between the two genres, with house music maintaining a steady, evolving texture, while jazz features more varied and dynamic structural changes.
 
 
-### Week 10 Keygram and Chordogram
+### Week 10 test Chordogram
 ``` {r}
 
 library(tidyverse)
 library(plotly)
 source("compmus.R")
 
-chordogram <- "features/gijs-s-1.json" |> 
+# Chordogram Track 1
+chordogram1 <- "features/gijs-s-1.json" |> 
   compmus_chroma(norm = "identity") |> 
   compmus_match_pitch_templates(
-    chord_templates,   
-    norm = "identity",       
-    distance = "cosine"    
+    chord_templates,
+    norm = "identity",
+    distance = "cosine"
   ) |>
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               
+  scale_fill_viridis_c(name = "Distance") +    # <-- Legend added
   labs(x = "Time (s)", y = "Chords") +
   theme_classic()
 
-chordogram_plotly <- ggplotly(chordogram)
+chordogram_plotly1 <- ggplotly(chordogram1)
 
-keygram <- "features/gijs-s-1.json" |> 
+# Chordogram Track 2
+chordogram2 <- "features/gijs-s-2.json" |> 
   compmus_chroma(norm = "identity") |> 
   compmus_match_pitch_templates(
-    key_templates,   
-    norm = "identity",       
-    distance = "cosine"    
+    chord_templates,
+    norm = "identity",
+    distance = "cosine"
   ) |>
   ggplot(aes(x = time, y = name, fill = d)) + 
   geom_raster() +
-  scale_fill_viridis_c(guide = "none") +               
-  labs(x = "Time (s)", y = "Keys") +
+  scale_fill_viridis_c(name = "Distance") +    # <-- Legend added
+  labs(x = "Time (s)", y = "Chords") +
   theme_classic()
 
-keygram_plotly <- ggplotly(keygram)
+chordogram_plotly2 <- ggplotly(chordogram2)
 
+# Combine using subplot
 fig <- subplot(
-  chordogram_plotly, 
-  keygram_plotly, 
+  chordogram_plotly1, 
+  chordogram_plotly2, 
   nrows = 2,
   titleX = TRUE,
-  margin = 0.09
+  margin = 0.09,
+  shareY = TRUE
 )
 
-
+# Add custom titles
 fig <- fig |> layout(
   annotations = list(
     list(
@@ -523,7 +527,7 @@ fig <- fig |> layout(
       showarrow = FALSE, font = list(size = 16, family = "Arial")
     ),
     list(
-      text = "<b>Keygram of Track 1</b>", 
+      text = "<b>Chordogram of Track 2</b>", 
       x = 0.5, y = 0.43, xref = "paper", yref = "paper", 
       showarrow = FALSE, font = list(size = 16, family = "Arial")
     )
@@ -536,8 +540,19 @@ fig
 ```
 
 ***
-Keygram and Chordogram description
+The chordograms visualize how well different chord templates match the harmonic content of the tracks over time. The y-axis lists a range of major, minor, and seventh chords, while the x-axis represents time.
 
+The color intensity reflects the cosine distance between the chroma features of the audio and each chord template:
+
+Darker colors (closer to 0) indicate a stronger match (lower distance)
+
+Brighter colors (closer to 1) indicate a weaker match (higher distance)
+
+This works because cosine distance measures the angular difference between two vectors — in this case, between the chroma vector of the audio and the chord template vector. A smaller angle (i.e., lower distance) means the chord and the audio are more harmonically aligned.
+
+Track 1 shows a more repetitive and structured chord pattern. You can see clear horizontal stripes, especially in the first and last thirds of the plot. These indicate that certain chords are matched consistently across time — a hallmark of loop-based electronic music. This regularity aligns with the stable, upbeat character expected from house music.
+
+Track 2, by contrast, displays a more varied and fragmented chord structure. The matching patterns are less uniform and more scattered, reflecting frequent harmonic changes. This is typical of jazz, where improvisation and rich chord progressions are central.
 
 
 ### Week 11 Tempogram track 1 and 2
@@ -572,6 +587,12 @@ tempogram1 / tempogram2
 
 ```
 
+***
+Track 1 (House) exhibits very steady and consistent tempo lines, especially around one dominant BPM throughout the track. This reflects the loop-based and beat-driven structure typical of house music, where rhythmic stability is essential for danceability. The strong horizontal lines suggest minimal tempo fluctuation, contributing to a smooth, predictable rhythmic feel that matches the track’s relaxing yet uplifting Ibiza-style vibe.
+
+Track 2 (Jazz) shows a less rigid, more fluctuating tempo profile. While it still has clear tempo lines, they are more blurred and dynamic, indicating rhythmic variation. These shifts align with the expressive timing and looser rhythmic phrasing typical of jazz, especially with instruments like piano and saxophone playing off the beat. The presence of multiple tempo components also reflects a richer rhythmic structure.
+
+Both tracks show strong tempo presence and rhythmic structure — but while House locks into a consistent grid, Jazz allows space for tempo nuance and expressive variation.
 
 
 ### Week 11 Energy Novelty and Spectral Novelty
@@ -619,6 +640,98 @@ spectral2 <- "features/gijs-s-2.json" |>
 
 ```
 
+***
+
+Track 1
+The energy novelty plot shows a relatively even dynamic profile, with some spikes but mostly smooth transitions. This reflects the steady, loop-based structure of house music.
+
+The spectral novelty is also relatively consistent, with minor fluctuations throughout. This means that the spectral distribution — the way energy is spread across different frequency bands — stays largely stable throughout the track. In other words, there are few significant changes in timbre or instrumentation. This aligns well with the track’s genre: house music typically builds gradually and relies on looped textures and consistent sound layers (e.g., kick, hi-hats, pads). The lack of sharp spectral transitions reflects this smooth, groove-oriented style, contributing to the track’s chill, beachy atmosphere.
+
+Track 2
+The energy novelty plot has many sharp spikes, indicating more sudden dynamic shifts — such as solo instrument entrances or expressive phrasing. This is typical in jazz, where players often emphasize contrast and variation.
+
+The spectral novelty is slightly more volatile than in Track 1, with richer variation in timbre. This likely comes from changes between saxophone, piano, and other instruments.
+
+
+
+### week 12 feature insights
+``` {r}
+
+library(tidyverse)
+library(patchwork)
+
+# Normalize function
+normalize <- function(x) {
+  (x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+}
+
+# Normalize entire dataset
+normalized_compmus <- compmus2025 |> 
+  mutate(across(c(arousal, danceability, instrumentalness, tempo), normalize))
+
+# Histogram
+histogram_plot <- compmus2025 |> 
+  pivot_longer(cols = c(arousal, danceability, instrumentalness, tempo)) |> 
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  facet_wrap(~ name, scales = "free", ncol = 2) +
+  labs(title = "Feature Distributions in the Corpus", x = "Value", y = "Count") +
+  theme_minimal()
+
+# Bar plot for Track 1
+bar1 <- normalized_compmus |> 
+  dplyr::filter(filename == "gijs-s-1") |> 
+  pivot_longer(cols = c(arousal, danceability, instrumentalness, tempo)) |> 
+  ggplot(aes(x = name, y = value)) +
+  geom_col(fill = "darkorange") +
+  labs(title = "Track 1: Normalized Feature Profile", x = "Feature", y = "Normalized Value") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 10))
+
+# Bar plot for Track 2
+bar2 <- normalized_compmus |> 
+  dplyr::filter(filename == "gijs-s-2") |> 
+  pivot_longer(cols = c(arousal, danceability, instrumentalness, tempo)) |> 
+  ggplot(aes(x = name, y = value)) +
+  geom_col(fill = "darkgreen") +
+  labs(title = "Track 2: Normalized Feature Profile", x = "Feature", y = "Normalized Value") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 10))
+
+# Combine
+histogram_plot / (bar1 | bar2)
+
+```
+
+***
+Before getting into the dendogram it is a good idea to get a better understanding of the feature to then better understand how they might influence the dendogram.
+Since Dendograms are unsupervised and don't optimize toward a specific target, it does not provide feature importance so therefore it is wise to get a better understanding of the features ourselves first and then try changing the dendogram one feature at a time to get an idea of which features lead to the most representative splits in the dendogram.
+
+Feature Profiles and Corpus Distribution
+The plots above provide insight into how four musical features — arousal, danceability, instrumentalness, and tempo — are distributed in the class corpus and how my two tracks compare to that distribution.
+
+In the top row, the histograms show the range and frequency of these features across all tracks in the class dataset. We observe:
+
+Arousal centers around 4.0–4.5, indicating a moderate energy level is most common.
+
+Danceability shows a wider spread, with a slight peak around 0.65.
+
+Instrumentalness clusters between 0.5 and 0.8, suggesting many tracks are largely instrumental.
+
+Tempo has several peaks but is most concentrated between 90 and 150 BPM.
+
+In the bottom row, the bar plots visualize the feature profiles of my two tracks:
+
+Track 1 (House) has a relatively high arousal and tempo (~130 BPM), fitting the genre's energetic and dance-oriented nature. Its danceability is moderate, and instrumentalness is low, likely due to layered textures rather than purely instrumental content.
+
+Track 2 (Jazz) also has a high tempo, though slightly lower than Track 1. It has higher instrumentalness and lower danceability, which fits with its jazz lounge style that emphasizes expressive instruments over rhythmic dance elements.
+
+Note on normalization:
+To make the bar plots more visually comparable, the feature values have been min-max normalized to a 0–1 scale. This ensures that features with inherently larger numerical ranges (like tempo) don't overshadow features with smaller ranges (like danceability).
+The histograms above are not normalized — they show the actual raw values from the dataset.
+
+In summary, while both tracks share high tempo values, they diverge in other features. The house track is more energetic and beat-driven, while the jazz track is more instrumental and less danceable — reflecting their respective genre intentions. Normalizing the bar plots allows for a balanced visual comparison, and comparing both to the class corpus histograms helps position each track within the broader context of the dataset.
+
 
 ### Week 12 dendogram
 ``` {r}
@@ -635,13 +748,13 @@ cluster_juice <-
       arousal +
       danceability +
       instrumentalness +
-      tempo +
-      valence,
+      tempo,
+      #valence,
     data = compmus2025
   ) |>
   step_center(all_predictors()) |>
   step_scale(all_predictors()) |> 
-  # step_range(all_predictors()) |> 
+  #step_range(all_predictors()) |> 
   prep(compmus2025) |>
   juice() |>
   column_to_rownames("filename")
@@ -650,37 +763,11 @@ compmus_dist <- dist(cluster_juice, method = "euclidean")
 
 
 compmus_dist |> 
-  hclust(method = "average") |> # Try single, average, and complete.
+  hclust(method = "complete") |> # Try single, average, and complete.
   dendro_data() |>
   ggdendrogram()
 
 ```
-
-
-
-### Week 12 heatmap
-``` {r}
-
-heatmaply(
-  cluster_juice,
-  hclustfun = hclust,
-  hclust_method = "average",  # Change for single, average, or complete linkage.
-  dist_method = "euclidean"
-)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
