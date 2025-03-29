@@ -187,7 +187,6 @@ HTML(as.character(tagList(
 ```
 
 ***
-
 These two tracks are based on my two favorate music genres. Namely house and jazz. I was interested to find out how well an AI music generator was capable of generating tracks in these genres and I would say it has done a pretty good job, considering how new this technology is. When listening to the tracks you hear that it is not always very smooth (For example in the time window of 45sec to 55sec in track 1 and the time window 1:20 to 1:30 in track 2) It sounds like the instruments are poorly tuned in those time windows. However, I am sure that minor imperfections like these will be a thing of the past when new model updates are released. Let's dive into the details, starting with an overview of the class portfolio after which I will focus on my two tracks. The setup is structured in a way that it follows the concepts that we discussed during each week of the Computational musicology course.
 
 ### Class Corpus Trend line
@@ -197,9 +196,10 @@ These two tracks are based on my two favorate music genres. Namely house and jaz
 library(ggplot2)
 library(dplyr)
 
-
 corpus <- read.csv("compmus2025.csv", header = TRUE)
 
+# Filter to get your specific tracks
+gijs_tracks <- dplyr::filter(corpus, filename %in% c("gijs-s-1", "gijs-s-2"))
 
 corpus_avg <- corpus %>%
   group_by(arousal) %>%
@@ -208,23 +208,33 @@ corpus_avg <- corpus %>%
 ggplot(corpus_avg, aes(x = arousal, y = avg_danceability)) +
   geom_line(color = "blue", size = 1) +
   geom_point(color = "darkblue", size = 3) +
+  geom_point(data = gijs_tracks, aes(x = arousal, y = danceability, color = filename), 
+             size = 5, shape = 21, fill = "white") + 
+  scale_color_manual(values = c("gijs-s-1" = "red", "gijs-s-2" = "green")) +
   theme_minimal() +
   labs(
     title = "Arousal vs Danceability (Trend Line)",
     x = "Arousal (Energy Level)",
-    y = "Average Danceability"
+    y = "Average Danceability",
+    color = "Track"
   )
 
 
 ```
 
 ***
-
 X-axis (Arousal - Energy Level): Measures the intensity/energy of the song. Higher values mean the song feels more energetic.
 Y-axis (Danceability): Measures how easy the song is to dance to.
 
+Hypothesis: A house track is easier to dance to compared to a jazz track.
+
 This plot visualizes the relationship between arousal (energy level) and danceability. The fluctuating trend suggests that there is no direct correlation. 
 Some high-energy songs are highly danceable, while others are not. Peaks around arousal levels 4.0 and 4.5 indicate that certain energy levels favor danceability, but the sudden drops highlight that not all energetic songs are easy to dance to.
+
+The red and green dot also show where my tracks are placed in this relationship.
+It becomes clear that track 1 has a higher level of arousal and danceability than track 2 does.
+This implies that is has higher energy and danceability which is in line with my expectation that a house track has higher intensity / energy and is easier / better to dance to compared to a jazz track.
+
 
 ### Class Corpus 2D Histogram
 
@@ -258,7 +268,6 @@ ggplot(corpus, aes(x = arousal, y = danceability)) +
 ```
 
 ***
-
 To get some more insights into the relationship between the two variables, I made another plot.
 
 This plot visualizes the relationship between arousal (energy level) and danceability in the class corpus. Lighter areas indicate where more songs exist, while darker areas show less common combinations.
@@ -383,7 +392,7 @@ Track 2 reveals more color variation and texture, aligning with jazz's expressiv
 
 
 
-### Week 9 chromagrams
+### Week 9 Chromagram
 ``` {r}
 
 library(tidyverse)
@@ -469,7 +478,7 @@ The chroma-based self-similarity matrix is more stable because jazz has recurrin
 Overall, the self-similarity results highlight the contrast between the two genres, with house music maintaining a steady, evolving texture, while jazz features more varied and dynamic structural changes.
 
 
-### Week 10 test Chordogram
+### Week 10 Chordogram
 ``` {r}
 
 library(tidyverse)
@@ -555,7 +564,7 @@ Track 1 shows a more repetitive and structured chord pattern. You can see clear 
 Track 2, by contrast, displays a more varied and fragmented chord structure. The matching patterns are less uniform and more scattered, reflecting frequent harmonic changes. This is typical of jazz, where improvisation and rich chord progressions are central.
 
 
-### Week 11 Tempogram track 1 and 2
+### Week 11 Tempograms
 ``` {r}
 
 library(tidyverse)
@@ -588,11 +597,16 @@ tempogram1 / tempogram2
 ```
 
 ***
-Track 1 (House) exhibits very steady and consistent tempo lines, especially around one dominant BPM throughout the track. This reflects the loop-based and beat-driven structure typical of house music, where rhythmic stability is essential for danceability. The strong horizontal lines suggest minimal tempo fluctuation, contributing to a smooth, predictable rhythmic feel that matches the track’s relaxing yet uplifting Ibiza-style vibe.
+Hypothesis: House has higher tempo than jazz
+
+Track 1 (House) exhibits very steady and consistent tempo lines. This reflects the loop-based and beat-driven structure typical of house music, where rhythmic stability is essential for danceability. The strong horizontal lines suggest minimal tempo fluctuation, contributing to a smooth, predictable rhythmic feel that matches the track’s relaxing yet uplifting Ibiza-style vibe.
 
 Track 2 (Jazz) shows a less rigid, more fluctuating tempo profile. While it still has clear tempo lines, they are more blurred and dynamic, indicating rhythmic variation. These shifts align with the expressive timing and looser rhythmic phrasing typical of jazz, especially with instruments like piano and saxophone playing off the beat. The presence of multiple tempo components also reflects a richer rhythmic structure.
 
 Both tracks show strong tempo presence and rhythmic structure — but while House locks into a consistent grid, Jazz allows space for tempo nuance and expressive variation.
+The hypothesis looks to be confirmed since the most dominant tempo line (brightest one) for house is around the 120 to 130 bpm range which is a typical tempo range for house.
+However, the most dominant tempo line for jazz looks to be also in the same area altough it looks to be slightly lower, so it is probably in the range of 100 to 110 bpm. 
+I didn't expect it to be so close to each other. But maybe this can also be explained by the prompts stating that the house track should be relaxing and the jazz track should be not too slow.
 
 
 ### Week 11 Energy Novelty and Spectral Novelty
@@ -641,7 +655,6 @@ spectral2 <- "features/gijs-s-2.json" |>
 ```
 
 ***
-
 Track 1
 The energy novelty plot shows a relatively even dynamic profile, with some spikes but mostly smooth transitions. This reflects the steady, loop-based structure of house music.
 
@@ -654,7 +667,7 @@ The spectral novelty is slightly more volatile than in Track 1, with richer vari
 
 
 
-### week 12 feature insights
+### week 12 Feature insights
 ``` {r}
 
 library(tidyverse)
@@ -684,7 +697,7 @@ bar1 <- normalized_compmus |>
   pivot_longer(cols = c(arousal, danceability, instrumentalness, tempo)) |> 
   ggplot(aes(x = name, y = value)) +
   geom_col(fill = "darkorange") +
-  labs(title = "Track 1: Normalized Feature Profile", x = "Feature", y = "Normalized Value") +
+  labs(title = "Feature profile Track 1", x = "Feature", y = "Normalized Value") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 10))
 
@@ -694,7 +707,7 @@ bar2 <- normalized_compmus |>
   pivot_longer(cols = c(arousal, danceability, instrumentalness, tempo)) |> 
   ggplot(aes(x = name, y = value)) +
   geom_col(fill = "darkgreen") +
-  labs(title = "Track 2: Normalized Feature Profile", x = "Feature", y = "Normalized Value") +
+  labs(title = "Feature profile Track 2", x = "Feature", y = "Normalized Value") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 10))
 
@@ -704,7 +717,7 @@ histogram_plot / (bar1 | bar2)
 ```
 
 ***
-Before getting into the dendogram it is a good idea to get a better understanding of the feature to then better understand how they might influence the dendogram.
+Before getting into the dendogram it is a good idea to get a better understanding of the features to then better understand how they might influence the dendogram.
 Since Dendograms are unsupervised and don't optimize toward a specific target, it does not provide feature importance so therefore it is wise to get a better understanding of the features ourselves first and then try changing the dendogram one feature at a time to get an idea of which features lead to the most representative splits in the dendogram.
 
 Feature Profiles and Corpus Distribution
@@ -715,12 +728,13 @@ In the top row, the histograms show the range and frequency of these features ac
 Arousal centers around 4.0–4.5, indicating a moderate energy level is most common.
 
 Danceability shows a wider spread, with a slight peak around 0.65.
+This also coincides with the Class corpus 2d histogram where we can see higher counts at these levels for arousal and danceability.
 
 Instrumentalness clusters between 0.5 and 0.8, suggesting many tracks are largely instrumental.
 
-Tempo has several peaks but is most concentrated between 90 and 150 BPM.
+Tempo has several peaks but is most concentrated between 90 and 150 BPM, which is still a quite wide range.
 
-In the bottom row, the bar plots visualize the feature profiles of my two tracks:
+In the bottom row, the bar plots visualize the normalized feature profiles of my two tracks:
 
 Track 1 (House) has a relatively high arousal and tempo (~130 BPM), fitting the genre's energetic and dance-oriented nature. Its danceability is moderate, and instrumentalness is low, likely due to layered textures rather than purely instrumental content.
 
@@ -733,7 +747,7 @@ The histograms above are not normalized — they show the actual raw values from
 In summary, while both tracks share high tempo values, they diverge in other features. The house track is more energetic and beat-driven, while the jazz track is more instrumental and less danceable — reflecting their respective genre intentions. Normalizing the bar plots allows for a balanced visual comparison, and comparing both to the class corpus histograms helps position each track within the broader context of the dataset.
 
 
-### Week 12 dendogram
+### Week 12 Dendogram
 ``` {r}
 
 library(tidyverse)
@@ -749,7 +763,7 @@ cluster_juice <-
       danceability +
       instrumentalness +
       tempo,
-      #valence,
+      valence,
     data = compmus2025
   ) |>
   step_center(all_predictors()) |>
@@ -759,7 +773,7 @@ cluster_juice <-
   juice() |>
   column_to_rownames("filename")
 
-compmus_dist <- dist(cluster_juice, method = "euclidean")
+compmus_dist <- dist(cluster_juice, method = "manhattan")
 
 
 compmus_dist |> 
@@ -769,7 +783,51 @@ compmus_dist |>
 
 ```
 
+***
+Coming from an AI bachelor, I was pretty interested in finding out what features are descriptive / meaningful / impactful for a hierarchical clustering method like a dendogram.
+Since dendrograms are unsupervised, they don’t provide feature importance directly, so I explored the effect of each feature on the clustering by testing their inclusion and removal.
+
+The feature distribution plots reveal that:
+
+Arousal is narrowly distributed around 4.0–4.5, meaning most tracks have similar energy levels. Its low variability explains why removing it had little impact on the dendrogram.
+
+Tempo shows a wide and distinct distribution, with peaks between 90–150 BPM. Removing it led to a significantly less balanced dendrogram, confirming its high influence. This makes sense, as tempo strongly differentiates genres like house (~130 BPM) and jazz (~100 BPM).
+
+Danceability and instrumentalness offer moderate variation and contribute meaningfully, though less strongly than tempo.
+
+After trying different clustering methods, I found that using complete linkage with Manhattan distance yielded the most balanced and interpretable dendrogram. While features like valence and arousal had minimal influence, I chose to keep all features in the final clustering to capture subtle differences between tracks.
+
+In short, tempo proved to be the most descriptive feature for clustering, while arousal and valence had limited effect due to their narrow distributions. The final dendrogram reflects these insights, forming meaningful groupings aligned with underlying musical characteristics.
+
+### Conclusion
+``` {r}
+
+library(htmltools)
+
+HTML(
+  as.character(
+    tags$div(
+      style = "font-size: 16px; line-height: 1.6; padding: 10px;",
+
+      tags$h3("Conclusion: Comparing AI-Generated House and Jazz Tracks"),
+
+      tags$p("This analysis provided insight into the class corpus 2025 and compared my two AI-generated tracks from different genres, namely house and jazz—by examining rhythmic, harmonic, timbral, and structural features."),
+
+      tags$ul(
+        tags$li(tags$b("Rhythm & Tempo: "), "The house track maintained a steady tempo ideal for dancing, while the jazz track showed subtle tempo shifts, aligning with its expressive, improvisational nature."),
+        tags$li(tags$b("Harmony & Timbre: "), "The house track had consistent chord and timbre patterns. In contrast, the jazz track was more varied, showing rich harmonic and timbral changes."),
+        tags$li(tags$b("Self-Similarity & Novelty: "), "Track 1 was more repetitive, fitting a loop-based style. Track 2 showed greater novelty and dynamic variation."),
+        tags$li(tags$b("Feature Profiles: "), "Track 1 scored higher on danceability and arousal. Track 2 was more instrumental and less danceable, which fits jazz."),
+        tags$li(tags$b("Clustering: "), "The dendrogram showed that tempo was an important clustering feature.")
+      ),
+
+      tags$p("Overall, the tracks effectively reflect their genre characteristics. The house track is rhythmic, energetic, and structured, while the jazz track is dynamic, harmonically rich, and expressive. This demonstrates the potential of AI in genre-aware music generation."),
+      tags$p("I hope you enjoyed my portfolio!")
+    )
+  )
+)
 
 
+```
 
 
